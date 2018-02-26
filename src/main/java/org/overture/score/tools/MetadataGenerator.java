@@ -2,10 +2,11 @@ package org.overture.score.tools;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.val;
 import org.icgc.dcc.storage.core.model.ObjectSpecification;
 
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static lombok.AccessLevel.PRIVATE;
@@ -20,9 +21,10 @@ public class MetadataGenerator {
   @NonNull private final SimplePartCalculator partCalculator;
   private final boolean doMd5check;
   private final PartMd5Generator partMd5Generator;
-  private final ExecutorService executorService;
   private final String bucketName;
+  private final int numThreads;
 
+  @SneakyThrows
   public ObjectSpecification generate(@NonNull String objectId,
       @NonNull String objectMd5, final long objectSize){
     val spec = new ObjectSpecification();
@@ -35,11 +37,14 @@ public class MetadataGenerator {
     val parts = partCalculator.divide(objectSize);
 
     if (doMd5check) {
+      val executorService = newFixedThreadPool(numThreads);
       for (val part : parts){
         executorService.submit(() -> {
           part.setSourceMd5(partMd5Generator.generateMd5(bucketName, objectId, part));
         } );
       }
+      executorService.shutdown();
+      executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
     } else {
       parts.forEach(p -> p.setSourceMd5(null));
     }
@@ -49,13 +54,12 @@ public class MetadataGenerator {
 
   public static MetadataGenerator createMetadataGenerator(int minPartSize) {
     return new MetadataGenerator(new SimplePartCalculator(minPartSize),
-        false, null, null, null);
+        false, null, null, -1);
   }
 
   public static MetadataGenerator createMetadataGenerator(int minPartSize, PartMd5Generator partMd5Generator,
       int numthreads, String bucketName) {
-    return new MetadataGenerator(new SimplePartCalculator(minPartSize), true, partMd5Generator,
-        newFixedThreadPool(numthreads), bucketName );
+    return new MetadataGenerator(new SimplePartCalculator(minPartSize), true, partMd5Generator, bucketName, numthreads );
   }
 
 }
