@@ -29,7 +29,7 @@ public class MetadataGenerator {
       @NonNull String objectMd5, final long objectSize){
     val spec = new ObjectSpecification();
     spec.setObjectId(objectId);
-    spec.setObjectKey(objectId);
+    spec.setObjectKey(bucketName+"/"+objectId);
     spec.setObjectMd5(objectMd5);
     spec.setObjectSize(objectSize);
     spec.setRelocated(false);
@@ -46,6 +46,7 @@ public class MetadataGenerator {
       executorService.shutdown();
       executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
     } else {
+      // Not recommended. Part downloads will never by md5 verified.
       parts.forEach(p -> p.setSourceMd5(null));
     }
     spec.setParts(parts);
