@@ -21,15 +21,19 @@ public class MetadataGenerator {
   @NonNull private final SimplePartCalculator partCalculator;
   private final boolean doMd5check;
   private final PartMd5Generator partMd5Generator;
-  private final String bucketName;
+  @NonNull private final String bucketName;
   private final int numThreads;
+  @NonNull private final String bucketDir;
 
   @SneakyThrows
   public ObjectSpecification generate(@NonNull String objectId,
       @NonNull String objectMd5, final long objectSize){
     val spec = new ObjectSpecification();
     spec.setObjectId(objectId);
-    spec.setObjectKey(bucketName+"/"+objectId);
+
+    // This is not required, but helps keep naming consistent. The getter for this field is never used in the code
+    spec.setObjectKey(bucketDir+"/"+objectId);
+
     spec.setObjectMd5(objectMd5);
     spec.setObjectSize(objectSize);
     spec.setRelocated(false);
@@ -53,14 +57,15 @@ public class MetadataGenerator {
     return spec;
   }
 
-  public static MetadataGenerator createMetadataGenerator(int minPartSize) {
+  public static MetadataGenerator createMetadataGenerator(int minPartSize, String bucketName, String bucketDir) {
     return new MetadataGenerator(new SimplePartCalculator(minPartSize),
-        false, null, null, -1);
+        false, null, bucketName, -1, bucketDir);
   }
 
   public static MetadataGenerator createMetadataGenerator(int minPartSize, PartMd5Generator partMd5Generator,
-      int numthreads, String bucketName) {
-    return new MetadataGenerator(new SimplePartCalculator(minPartSize), true, partMd5Generator, bucketName, numthreads );
+      int numthreads, String bucketName, String bucketDir) {
+    return new MetadataGenerator(new SimplePartCalculator(minPartSize), true, partMd5Generator, bucketName,
+        numthreads, bucketDir );
   }
 
 }

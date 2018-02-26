@@ -18,7 +18,7 @@ public class GeneratorTest {
     val expectedPartSize = 500;
     val numParts = 5;
     val expectedObjectSize = numParts*expectedPartSize;
-    val generator = createMetadataGenerator(expectedPartSize);
+    val generator = createMetadataGenerator(expectedPartSize, "myBucket", "data");
     val spec = generator.generate("myObjectId1", "jdh39hdi20jdo3", expectedObjectSize);
     assertThat(spec.getParts().size()).isEqualTo(1);
   }
@@ -28,7 +28,7 @@ public class GeneratorTest {
     val expectedPartSize = 7*MIN_PART_SIZE;
     val numParts = 5;
     val expectedObjectSize = numParts*expectedPartSize;
-    val generator = createMetadataGenerator(expectedPartSize);
+    val generator = createMetadataGenerator(expectedPartSize, "myBucket", "data");
     val spec = generator.generate("myObjectId1", "jdh39hdi20jdo3", expectedObjectSize);
     assertThat(spec.getParts().size()).isEqualTo(5);
     log.info(spec.toString());
